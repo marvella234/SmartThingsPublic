@@ -256,9 +256,9 @@ def setHeatingSetpoint(degrees)
 def setHeatingSetpoint(Double degrees)
 {
 	log.debug "Storing temperature for next wake ${degrees}"
-	//	TODO: should this be convertedDegrees?
     sendEvent(name:"nextHeatingSetpoint", value: degrees, unit: getTemperatureScale())
-    if(degrees > 4) {
+
+	if(degrees > 4) {
 		sendEvent(name:"switch", value: "on", displayed: false)
     }
     else {
