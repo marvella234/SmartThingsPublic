@@ -296,6 +296,12 @@ def off()
 	setHeatingSetpoint(4)
 }
 
+def updated() {
+    log.debug("updated")
+    response(configure())
+}
+
+
 private setClock()
 {	// set the clock once a week
 	def now = new Date().time
