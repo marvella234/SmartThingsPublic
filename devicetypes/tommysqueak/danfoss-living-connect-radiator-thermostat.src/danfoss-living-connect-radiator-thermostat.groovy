@@ -269,10 +269,10 @@ def setHeatingSetpoint(Double degrees)
 def setHeatingSetpointCommand(Double degrees)
 {
 	log.trace "setHeatingSetpoint ${degrees}"
-	def deviceScale = state.scale ?: 1
+	def deviceScale = state.scale ?: 2
 	def deviceScaleString = deviceScale == 2 ? "C" : "F"
     def locationScale = getTemperatureScale()
-	def p = (state.precision == null) ? 1 : state.precision
+	def precision = state.precision ?: 2
 
     def convertedDegrees
     if (locationScale == "C" && deviceScaleString == "F") {
