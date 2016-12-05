@@ -42,10 +42,7 @@ metadata {
 	}
 
 	simulator {
-        // These show up in the IDE simulator "messages" drop-down to test
-        // sending event messages to your device handler
-    	status "low battery alert":
-       		zwave.batteryV1.batteryReport(batteryLevel:0xFF).incomingMessage()
+
 	}
 
 	// http://scripts.3dgo.net/smartthings/icons/
