@@ -205,7 +205,7 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd)
 	}
 
     // Only ask for battery if we haven't had a BatteryReport in a while
-    if (!state.lastbatt || (new Date().time) - state.lastbatt > daysToTime(7))
+    if (!state.lastBatteryReportReceivedAt || (new Date().time) - state.lastBatteryReportReceivedAt > daysToTime(7))
     {
     	log.debug "Asking for battery report"
     	cmds << zwave.batteryV1.batteryGet().format()
@@ -235,13 +235,12 @@ def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
     def map = [ name: "battery", unit: "%" ]
     if (cmd.batteryLevel == 0xFF) {  // Special value for low battery alert
         map.value = 1
-        map.descriptionText = "${device.displayName} has a low battery"
-        map.isStateChange = true
+        map.descriptionText = "Low Battery"
     } else {
         map.value = cmd.batteryLevel
     }
     // Store time of last battery update so we don't ask every wakeup, see WakeUpNotification handler
-    state.lastbatt = new Date().time
+    state.lastBatteryReportReceivedAt = new Date().time
     createEvent(map)
 }
 
