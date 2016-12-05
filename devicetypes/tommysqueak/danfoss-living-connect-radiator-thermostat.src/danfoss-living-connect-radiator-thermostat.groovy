@@ -14,10 +14,11 @@
  *
  */
 metadata {
-	definition (name: "Danfoss Living Connect Radiator Thermostat LC-13 v1", namespace: "tommysqueak", author: "Tom Philip") {
+	definition (name: "Danfoss Living Connect Radiator Thermostat LC-13 v2", namespace: "tommysqueak", author: "Tom Philip") {
 		capability "Thermostat Heating Setpoint"
         capability "Battery"
         capability "Configuration"
+        capability "Switch"
 
         attribute "nextHeatingSetpoint", "number"
 
@@ -50,7 +51,7 @@ metadata {
 	// http://scripts.3dgo.net/smartthings/icons/
 	//	TODO: create temp set like Nest thermostat - http://docs.smartthings.com/en/latest/device-type-developers-guide/tiles-metadata.html
 	tiles(scale: 2) {
-        multiAttributeTile(name:"richtemp", type:"thermostat", width:6, height:4) {
+        multiAttributeTile(name:"richtemp", type:"lighting", width:6, height:4) {
             tileAttribute("device.heatingSetpoint", key: "PRIMARY_CONTROL") {
                 attributeState("heat", label:'${currentValue}°', icon: "st.Weather.weather2",
                     backgroundColors:[
@@ -65,31 +66,25 @@ metadata {
                 )
             }
 			tileAttribute ("device.nextHeatingSetpoint", key: "SECONDARY_CONTROL") {
-           		attributeState "heat", label:'${currentValue}°'
+           		attributeState "heat", label:'Next ${currentValue}°'
             }
+        	tileAttribute("device.nextHeatingSetpoint", key: "SLIDER_CONTROL") {
+            	attributeState "default", action:"setHeatingSetpoint", unit:""
+  			}
         }
-        valueTile("battery", "device.battery", inactiveLabel: false, height: 2, width: 3, decoration: "flat") {
+		standardTile("switcher", "device.switch", height: 2, width: 3, inactiveLabel: true, decoration: "flat") {
+			state("off", action:"on", icon: "st.thermostat.heat", backgroundColor:"#153591")
+			state("on", action:"off", icon: "st.thermostat.cool", backgroundColor:"#bc2323")
+		}
+		valueTile("battery", "device.battery", inactiveLabel: false, height: 2, width: 3, decoration: "flat") {
             state "battery", label:'${currentValue}% battery', unit:""
         }
         controlTile("heatSliderControl", "device.nextHeatingSetpoint", "slider", height: 2, width: 6, inactiveLabel: false, range:"(4..22)") {
-            state "setHeatingSetpoint", action:"setHeatingSetpoint", backgroundColor:"#d04e00"
-        }
-        valueTile("nextHeatingSetpointValue", "device.nextHeatingSetpoint", inactiveLabel: false, height: 2, width: 3, decoration: "flat") {
-            state("heat", label: 'Next ${currentValue}°', unit: "",
-                backgroundColors:[
-                    [value: 4, color: "#153591"],
-                    [value: 7, color: "#1e9cbb"],
-                    [value: 10, color: "#90d2a7"],
-                    [value: 13, color: "#44b621"],
-                    [value: 16, color: "#f1d801"],
-                    [value: 19, color: "#d04e00"],
-                    [value: 22, color: "#bc2323"]
-                ]
-            )
+            state "setHeatingSetpoint", action:"setHeatingSetpoint"
         }
 
         main "richtemp"
-        details(["richtemp", "heatSliderControl", "nextHeatingSetpointValue", "battery"])
+        details(["richtemp", "heatSliderControl", "switcher", "battery"])
 	}
 }
 
@@ -227,6 +222,14 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 	chosenTempMap.unit = getTemperatureScale()
     chosenTempMap.displayed = false
 
+	def offOrOn = [name: "switch", displayed: false]
+    if(nextTemperature > 4) {
+		offOrOn.value = "on"
+    }
+    else {
+    	offOrOn.value = "off"
+    }
+
 	// So we can respond with same format later, see setHeatingSetpoint()
 	state.scale = cmd.scale
 	state.precision = cmd.precision
@@ -325,6 +328,12 @@ def setHeatingSetpoint(Double degrees)
 	log.debug "Storing temperature for next wake ${degrees}"
 	//	TODO: should this be convertedDegrees?
     sendEvent(name:"nextHeatingSetpoint", value: degrees, unit: getTemperatureScale())
+    if(degrees > 4) {
+		sendEvent(name:"switch", value: "on", displayed: false)
+    }
+    else {
+		sendEvent(name:"switch", value: "off", displayed: false)
+    }
 }
 
 def setHeatingSetpointCommand(Double degrees)
@@ -350,6 +359,16 @@ def setHeatingSetpointCommand(Double degrees)
 def setSchedule() {
 	log.debug "Executing 'setSchedule'"
 	// TODO: handle 'setSchedule' command
+}
+
+def on()
+{
+	setHeatingSetpoint(20)
+}
+
+def off()
+{
+	setHeatingSetpoint(4)
 }
 
 private setClock()
