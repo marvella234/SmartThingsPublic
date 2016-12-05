@@ -1,7 +1,7 @@
 /**
  *  Danfoss Living Connect Radiator Thermostat LC-13
  *
- *  Copyright 2015 Tom Philip
+ *  Copyright 2016 Tom Philip
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -14,21 +14,21 @@
  *
  */
 metadata {
-	definition (name: "Danfoss Living Connect Radiator Thermostat LC-13 v2", namespace: "tommysqueak", author: "Tom Philip") {
-		capability "Thermostat Heating Setpoint"
+	definition (name: "Danfoss Living Connect Radiator Thermostat LC-13 v3", namespace: "tommysqueak", author: "Tom Philip") {
+        capability "Thermostat Heating Setpoint"
         capability "Battery"
         capability "Configuration"
         capability "Switch"
 
         attribute "nextHeatingSetpoint", "number"
 
-		//	TODO: why fingerpint is not working? z-wave thermostat's fingerprint is below, which is the one it picks up.
-    	//	fingerprint deviceId: "0x08"
-		//	fingerprint inClusters: "0x43,0x40,0x44,0x31"
-		// raw fingerprint 0 0 0x0804 0 0 0 d 0x80 0x46 0x81 0x72 0x8F 0x75 0x43 0x86 0x84 0xEF 0x46 0x81 0x8F
+        //	TODO: why fingerpint is not working? z-wave thermostat's fingerprint is below, which is the one it picks up.
+        //	fingerprint deviceId: "0x08"
+        //	fingerprint inClusters: "0x43,0x40,0x44,0x31"
+        // raw fingerprint 0 0 0x0804 0 0 0 d 0x80 0x46 0x81 0x72 0x8F 0x75 0x43 0x86 0x84 0xEF 0x46 0x81 0x8F
         //	0x0804 = device id, the inClusters are the commands
         fingerprint deviceId: "0x0804"
-        fingerprint inClusters: "0x43, 0x46, 0x72, 0x75, 0x80, 0x81, 0x84, 0x86, 0x8F, 0xEF"
+        fingerprint inClusters: "0x43, 0x46, 0x72, 0x75, 0x80, 0x81, 0x84, 0x86, 0x8F"
         // 0x80 = Battery v1
         // 0x46 = Climate Control Schedule v1
         // 0x81 = Clock v1
@@ -38,7 +38,6 @@ metadata {
         // 0x43 = Thermostat Setpoint v2
         // 0x86 = Version v1
         // 0x84 = Wake Up v2
-        // 0xEF = Mark
 	}
 
 	simulator {
@@ -138,56 +137,6 @@ def parse(String description) {
 
 }
 
-def zwaveEvent(physicalgraph.zwave.Command cmd) {
-    // This will capture any commands not handled by other instances of zwaveEvent
-    // and is recommended for development so you can see every command the device sends
-    return createEvent(descriptionText: "Unlistened to event. ${device.displayName}: ${cmd}")
-}
-
-// http://dz.prosyst.com/pdoc/mBS_SH_SDK_7.3.0/modules/zwave/api/com/prosyst/mbs/services/zwave/commandclasses/CCClimateControlSchedule.html
-def zwaveEvent1(physicalgraph.zwave.commands.climatecontrolschedulev1.ScheduleOverrideReport cmd)
-{
-	//ScheduleOverrideReport(overrideState: 127, overrideType: 0, reserved01: 0)
-}
-
-Short ENERGY_SAVE_MODE = 122
-Short FROST_PROTECTION = 121
-Short UNUSED = 127
-
-
-
-// http://dz.prosyst.com/pdoc/mBS_SH_SDK_7.3.0/modules/zwave/api/com/prosyst/mbs/services/zwave/commandclasses/CCClimateControlSchedule.html
-def zwaveEvent(physicalgraph.zwave.commands.climatecontrolschedulev1.ScheduleReport cmd)
-{
-	def DAYS_OF_WEEK = ["Invalid", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-	//	127 = unused
-	log.debug "Schedule for ${DAYS_OF_WEEK[cmd.weekday]}"
-    logSwitchpoint(cmd.switchpoint0)
-    logSwitchpoint(cmd.switchpoint1)
-    logSwitchpoint(cmd.switchpoint2)
-    logSwitchpoint(cmd.switchpoint3)
-    logSwitchpoint(cmd.switchpoint4)
-    logSwitchpoint(cmd.switchpoint5)
-    logSwitchpoint(cmd.switchpoint6)
-    logSwitchpoint(cmd.switchpoint7)
-    logSwitchpoint(cmd.switchpoint8)
-    //def hour = 1
-    //def minute = 2
-    //def temp = 127
-
-    //Integer switchpoint = hour + (minute << 8) + (temp << 16);
-    //Integer switchpointAlternative = 0x01027F  // same as above 1 hr 2 min and 127(not used)
-}
-
-private logSwitchpoint(Integer switchpoint)
-{
-   	def hour = switchpoint & 0xFF0000
-   	def minute = switchpoint & 0x00FF00
-	def temperature = switchpoint & 0x0000FF
-
-	log.debug "At ${hour}:${minute} the temperature will be ${temperature}. Raw: ${switchpoint}"
-}
-
 def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpointReport cmd)
 {
 	//	Parsed ThermostatSetpointReport(precision: 2, reserved01: 0, scale: 0, scaledValue: 21.00, setpointType: 1, size: 2, value: [8, 52])
@@ -236,12 +185,6 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd)
 {
 	log.debug "Wakey wakey"
-    //	TODO: check commands are being sent as a multi-command (encap)
-
-    def schedule = new physicalgraph.zwave.commands.climatecontrolschedulev1.ScheduleGet()
-    schedule.weekday = 4
-    //schedule.overrideState = 1
-    //schedule.overrideType = -2
 
     def wakeUpCap = new physicalgraph.zwave.commands.wakeupv2.WakeUpIntervalCapabilitiesGet()
 
@@ -283,15 +226,6 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd)
 		//	Be sure to set the new temp ourselves, as commands don't always run in order
 		event = createEvent(name: "heatingSetpoint", value: device.currentValue("nextHeatingSetpoint").doubleValue(), unit: getTemperatureScale())
     }
-
-    //cmds << wakeUpCap.format()
-	//cmds << "delay 1500"
-
-    //cmds << wakeUp.format()
-    //cmds << "delay 1500"
-
-    //cmds << schedule.format()
-    //cmds << "delay 1500"
 
     cmds << zwave.wakeUpV1.wakeUpNoMoreInformation().format()
     [event, response(cmds)] // return a list containing the event and the result of response()
@@ -349,13 +283,8 @@ def setHeatingSetpointCommand(Double degrees)
     } else {
     	convertedDegrees = degrees
     }
-    //	1 = SETPOINT_TYPE_HEATING_1
-	zwave.thermostatSetpointV1.thermostatSetpointSet(setpointType: 1, scale: deviceScale, precision: p, scaledValue: convertedDegrees)
-}
 
-def setSchedule() {
-	log.debug "Executing 'setSchedule'"
-	// TODO: handle 'setSchedule' command
+	zwave.thermostatSetpointV1.thermostatSetpointSet(setpointType: 1, scale: deviceScale, precision: precision, scaledValue: convertedDegrees)
 }
 
 def on()
