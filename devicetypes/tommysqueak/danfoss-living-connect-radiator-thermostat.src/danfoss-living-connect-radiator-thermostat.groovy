@@ -140,6 +140,7 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 	state.scale = cmd.scale
 	state.precision = cmd.precision
 
+	def eventList = []
 	def cmdScale = cmd.scale == 1 ? "F" : "C"
 	def radiatorTemperature = Double.parseDouble(convertTemperatureIfNeeded(cmd.scaledValue, cmdScale, cmd.precision))
 
@@ -160,7 +161,15 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 		offOrOn.value = "off"
 	}
 
-	[createEvent(deviceTempMap), createEvent(offOrOn)]
+	eventList << createEvent(deviceTempMap)
+	eventList << createEvent(offOrOn)
+
+	if(nextTemperature == 0) {
+		//	initialise the nextHeatingSetpoint, on the very first time we install and get the devices temp
+		eventList << createEvent(name:"nextHeatingSetpoint", value: radiatorTemperature, unit: getTemperatureScale())
+	}
+
+	eventList
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
