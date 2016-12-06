@@ -15,11 +15,14 @@
  */
 metadata {
 	definition (name: "Danfoss Living Connect Radiator Thermostat LC-13 v3", namespace: "tommysqueak", author: "Tom Philip") {
+		//	TODO: expose as a thermostat, for SmartApps
 		capability "Thermostat Heating Setpoint"
 		capability "Battery"
 		capability "Configuration"
 		capability "Switch"
 
+		command "temperatureUp"
+		command "temperatureDown"
 		attribute "nextHeatingSetpoint", "number"
 
 		// raw fingerprint zw:S type:0804 mfr:0002 prod:0005 model:0004 ver:1.01 zwv:3.67 lib:06 cc:80,46,81,72,8F,75,43,86,84 ccOut:46,81,8F
@@ -44,40 +47,58 @@ metadata {
 	// http://scripts.3dgo.net/smartthings/icons/
 	//	TODO: create temp set like Nest thermostat - http://docs.smartthings.com/en/latest/device-type-developers-guide/tiles-metadata.html
 	tiles(scale: 2) {
-		multiAttributeTile(name:"richtemp", type:"lighting", width:6, height:4) {
-			tileAttribute("device.heatingSetpoint", key: "PRIMARY_CONTROL") {
-				attributeState("heat", label:'${currentValue}°', icon: "st.Weather.weather2",
+		multiAttributeTile(name:"richtemp", type:"thermostat", width:6, height:4) {
+			tileAttribute("device.nextHeatingSetpoint", key: "PRIMARY_CONTROL") {
+				attributeState("default", label:'${currentValue}°',
 					backgroundColors:[
-						[value: 4, color: "#153591"],
+						// Celsius Color Range
+						[value: 0, color: "#153591"],
 						[value: 7, color: "#1e9cbb"],
-						[value: 10, color: "#90d2a7"],
-						[value: 13, color: "#44b621"],
-						[value: 16, color: "#f1d801"],
-						[value: 19, color: "#d04e00"],
-						[value: 22, color: "#bc2323"]
-						]
+						[value: 15, color: "#90d2a7"],
+						[value: 23, color: "#44b621"],
+						[value: 29, color: "#f1d801"],
+						[value: 33, color: "#d04e00"],
+						[value: 36, color: "#bc2323"],
+						// Fahrenheit Color Range
+						[value: 40, color: "#153591"],
+						[value: 44, color: "#1e9cbb"],
+						[value: 59, color: "#90d2a7"],
+						[value: 74, color: "#44b621"],
+						[value: 84, color: "#f1d801"],
+						[value: 92, color: "#d04e00"],
+						[value: 96, color: "#bc2323"]
+					]
 				)
 			}
-			tileAttribute ("device.nextHeatingSetpoint", key: "SECONDARY_CONTROL") {
-				attributeState "heat", label:'Next ${currentValue}°'
+
+			tileAttribute("device.heatingSetpoint", key: "VALUE_CONTROL") {
+				attributeState("VALUE_UP", action: "temperatureUp")
+				attributeState("VALUE_DOWN", action: "temperatureDown")
 			}
-			tileAttribute("device.nextHeatingSetpoint", key: "SLIDER_CONTROL") {
-				attributeState "default", action:"setHeatingSetpoint", unit:""
+
+			tileAttribute("device.switch", key: "SECONDARY_CONTROL") {
+				attributeState "on", label:'${name}', icon: "st.switches.switch.on"
+				attributeState "off", label:'${name}', icon: "st.switches.switch.off"
+			}
+
+			tileAttribute("device.heatingSetpoint", key: "OPERATING_STATE") {
+				attributeState("heatingSetpoint", label:'Current ${currentValue}°', backgroundColor:"#153591")
+			}
+
+			tileAttribute("device.heatingSetpoint", key: "THERMOSTAT_MODE") {
+			}
+
+			tileAttribute("device.heatingSetpoint", key: "HEATING_SETPOINT") {
+				attributeState("default", label:'${currentValue}')
 			}
 		}
-		standardTile("switcher", "device.switch", height: 2, width: 3, inactiveLabel: true, decoration: "flat") {
-			state("off", action:"on", icon: "st.thermostat.heat", backgroundColor:"#153591")
-			state("on", action:"off", icon: "st.thermostat.cool", backgroundColor:"#bc2323")
-		}
+
 		valueTile("battery", "device.battery", inactiveLabel: false, height: 2, width: 3, decoration: "flat") {
 			state "battery", label:'${currentValue}% battery', unit:""
 		}
-		controlTile("heatSliderControl", "device.nextHeatingSetpoint", "slider", height: 2, width: 6, inactiveLabel: false, range:"(4..22)") {
-			state "setHeatingSetpoint", action:"setHeatingSetpoint"
-		}
 
 		main "richtemp"
-		details(["richtemp", "heatSliderControl", "switcher", "battery"])
+		details(["richtemp", "battery"])
 	}
 }
 
@@ -197,7 +218,7 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
 	}
 
   cmds << zwave.wakeUpV1.wakeUpNoMoreInformation().format()
-  delayBetween(cmds, 1000)
+  [event, response(delayBetween(cmds, 1000))]
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
@@ -216,6 +237,27 @@ def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
 //
 //	commands (that it can handle, must implement those that match it's capabilities, so SmartApps can call these methods)
 //
+//	TODO: review the commands, do they have the right interface/params
+
+def temperatureUp() {
+	def nextTemp = currentDouble("nextHeatingSetpoint") + 1
+	//	It can't handle above 28, so don't allow it go above
+	//	TODO: deal with Farenheit?
+	if(nextTemp > 28) {
+		nextTemp = 28d
+	}
+	setHeatingSetpoint(nextTemp)
+}
+
+def temperatureDown() {
+	def nextTemp = currentDouble("nextHeatingSetpoint") - 1
+	//	It can't go below 4, so don't allow it
+	if(nextTemp < 4) {
+		nextTemp = 4d
+	}
+	setHeatingSetpoint(nextTemp)
+}
+
 //	Thermostat Heating Setpoint
 def setHeatingSetpoint(degrees) {
 	setHeatingSetpoint(degrees.toDouble())
