@@ -206,9 +206,11 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
   //	Send the new temperature, if we haven't yet sent it
   log.debug "New temperature check. Next: ${device.currentValue("nextHeatingSetpoint")} vs Current: ${device.currentValue("heatingSetpoint")}"
 
-  if (currentDouble("nextHeatingSetpoint") != 0) {
-		log.debug "Sending new temperature ${device.currentValue("nextHeatingSetpoint")}"
-		cmds << setHeatingSetpointCommand(device.currentValue("nextHeatingSetpoint")).format()
+	def nextHeatingSetpoint = currentDouble("nextHeatingSetpoint")
+	def heatingSetpoint = currentDouble("heatingSetpoint")
+	if (nextHeatingSetpoint != 0 && nextHeatingSetpoint != heatingSetpoint) {
+		log.debug "Sending new temperature ${nextHeatingSetpoint}"
+		cmds << setHeatingSetpointCommand(nextHeatingSetpoint).format()
 		//	Mop up any flwas, ask for the devices temp
 		//cmds << zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 1).format()
 		//	Be sure to set the new temp ourselves, as commands don't always run in order
