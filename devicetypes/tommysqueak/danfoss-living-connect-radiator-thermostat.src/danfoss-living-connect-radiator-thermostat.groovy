@@ -26,9 +26,7 @@ metadata {
 		attribute "nextHeatingSetpoint", "number"
 
 		// raw fingerprint zw:S type:0804 mfr:0002 prod:0005 model:0004 ver:1.01 zwv:3.67 lib:06 cc:80,46,81,72,8F,75,43,86,84 ccOut:46,81,8F
-		//	0x0804 = device id, the inClusters are the commands
-		fingerprint deviceId: "0x0804"
-		fingerprint inClusters: "0x43, 0x46, 0x72, 0x75, 0x80, 0x81, 0x84, 0x86, 0x8F"
+		fingerprint type: "0804", mfr: "0002", prod: "0005", model: "0004", cc: "80,46,81,72,8F,75,43,86,84", ccOut:"46,81,8F"
 		// 0x80 = Battery v1
 		// 0x46 = Climate Control Schedule v1
 		// 0x81 = Clock v1
