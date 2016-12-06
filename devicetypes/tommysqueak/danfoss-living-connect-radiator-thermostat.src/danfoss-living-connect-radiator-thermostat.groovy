@@ -131,6 +131,10 @@ def parse(String description) {
 def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpointReport cmd) {
 	//	Parsed ThermostatSetpointReport(precision: 2, reserved01: 0, scale: 0, scaledValue: 21.00, setpointType: 1, size: 2, value: [8, 52])
 
+	// So we can respond with same format later, see setHeatingSetpoint()
+	state.scale = cmd.scale
+	state.precision = cmd.precision
+
 	def cmdScale = cmd.scale == 1 ? "F" : "C"
 	def radiatorTemperature = Double.parseDouble(convertTemperatureIfNeeded(cmd.scaledValue, cmdScale, cmd.precision))
 
@@ -139,36 +143,19 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 
 	log.debug "SetpointReport. current:${currentTemperature} next:${nextTemperature} radiator:${radiatorTemperature}"
 
-	//	If we've just set (ie sent the temp), then don't override it with the radiator temp,
-	//	even though we might want the rad to override, we can't it's already been sent!
-	def now = new Date().time
-	if(device.currentState("heatingSetpoint") && currentTemperature != radiatorTemperature && device.currentState("heatingSetpoint").date.time < (now - 1000)) {
-		log.debug "setting current and next to the radiators temperature"
-		currentTemperature = radiatorTemperature
-		nextTemperature = radiatorTemperature
-	}
-
 	def deviceTempMap = [name: "heatingSetpoint"]
-	deviceTempMap.value = currentTemperature
+	deviceTempMap.value = radiatorTemperature
 	deviceTempMap.unit = getTemperatureScale()
 
-	def chosenTempMap = [name: "nextHeatingSetpoint"]
-	chosenTempMap.value = nextTemperature
-	chosenTempMap.unit = getTemperatureScale()
-	chosenTempMap.displayed = false
-
 	def offOrOn = [name: "switch", displayed: false]
-	if(nextTemperature > 4) {
+	if(radiatorTemperature > 4) {
 		offOrOn.value = "on"
 	}
 	else {
 		offOrOn.value = "off"
 	}
 
-	// So we can respond with same format later, see setHeatingSetpoint()
-	state.scale = cmd.scale
-	state.precision = cmd.precision
-	[createEvent(deviceTempMap), createEvent(chosenTempMap)]
+	[createEvent(deviceTempMap), createEvent(offOrOn)]
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
@@ -185,18 +172,18 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
 
   //	Send the new temperature, if we haven't yet sent it
   log.debug "New temperature check. Next: ${device.currentValue("nextHeatingSetpoint")} vs Current: ${device.currentValue("heatingSetpoint")}"
-  //	TODO: take into account nextHeatingSetpoint having no value
-  if (currentDouble("nextHeatingSetpoint") != currentDouble("heatingSetpoint")) {
+
+  if (currentDouble("nextHeatingSetpoint") != 0) {
 		log.debug "Sending new temperature ${device.currentValue("nextHeatingSetpoint")}"
 		cmds << setHeatingSetpointCommand(device.currentValue("nextHeatingSetpoint")).format()
 		//	Mop up any flwas, ask for the devices temp
-		cmds << zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 1).format()
+		//cmds << zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 1).format()
 		//	Be sure to set the new temp ourselves, as commands don't always run in order
-		event = createEvent(name: "heatingSetpoint", value: device.currentValue("nextHeatingSetpoint").doubleValue(), unit: getTemperatureScale())
+		//event = createEvent(name: "heatingSetpoint", value: device.currentValue("nextHeatingSetpoint").doubleValue(), unit: getTemperatureScale())
 	}
 
   cmds << zwave.wakeUpV1.wakeUpNoMoreInformation().format()
-  [event, response(delayBetween(cmds, 1000))] // return a list containing the event and the result of response()
+  delayBetween(cmds, 1000)
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
@@ -257,6 +244,11 @@ def on() {
 
 def off() {
 	setHeatingSetpoint(4)
+}
+
+def installed() {
+	log.debug "installed"
+	configure()
 }
 
 def updated() {
