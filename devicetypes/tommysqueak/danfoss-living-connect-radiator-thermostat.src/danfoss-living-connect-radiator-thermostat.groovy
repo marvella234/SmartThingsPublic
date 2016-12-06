@@ -299,7 +299,7 @@ private daysToTime(days) {
 
 private currentTimeCommand() {
     def nowCalendar = Calendar.getInstance(location.timeZone)
-    log.debug "Setting clock to ${nowCalendar.getTime().format("dd-mm-yyyy HH:mm z", location.timeZone)}"
+    log.debug "Setting clock to ${nowCalendar.getTime().format("dd-MM-yyyy HH:mm z", location.timeZone)}"
     def weekday = nowCalendar.get(Calendar.DAY_OF_WEEK) - 1
     if (weekday == 0) {
         weekday = 7
