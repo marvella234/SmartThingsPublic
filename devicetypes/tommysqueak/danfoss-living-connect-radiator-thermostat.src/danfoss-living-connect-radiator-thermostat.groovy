@@ -128,6 +128,11 @@ def parse(String description) {
 	result
 }
 
+//	catch all unhandled events
+def zwaveEvent(physicalgraph.zwave.Command cmd) {
+	return createEvent(descriptionText: "Uncaptured event for ${device.displayName}: ${cmd}")
+}
+
 def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpointReport cmd) {
 	//	Parsed ThermostatSetpointReport(precision: 2, reserved01: 0, scale: 0, scaledValue: 21.00, setpointType: 1, size: 2, value: [8, 52])
 
