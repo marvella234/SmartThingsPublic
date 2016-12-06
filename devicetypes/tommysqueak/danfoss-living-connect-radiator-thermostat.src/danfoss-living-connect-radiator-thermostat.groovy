@@ -22,22 +22,19 @@ metadata {
 
 		attribute "nextHeatingSetpoint", "number"
 
-		//	TODO: why fingerpint is not working? z-wave thermostat's fingerprint is below, which is the one it picks up.
-    //	fingerprint deviceId: "0x08"
-		//	fingerprint inClusters: "0x43,0x40,0x44,0x31"
-		// raw fingerprint 0 0 0x0804 0 0 0 d 0x80 0x46 0x81 0x72 0x8F 0x75 0x43 0x86 0x84 0xEF 0x46 0x81 0x8F
-    //	0x0804 = device id, the inClusters are the commands
-    fingerprint deviceId: "0x0804"
-    fingerprint inClusters: "0x43, 0x46, 0x72, 0x75, 0x80, 0x81, 0x84, 0x86, 0x8F"
-    // 0x80 = Battery v1
-    // 0x46 = Climate Control Schedule v1
-    // 0x81 = Clock v1
-    // 0x72 = Manufacturer Specific v1
-    // 0x8F = Multi Cmd v1 (Multi Command Encapsulated)
-    // 0x75 = Protection v2
-    // 0x43 = Thermostat Setpoint v2
-    // 0x86 = Version v1
-    // 0x84 = Wake Up v2
+		// raw fingerprint zw:S type:0804 mfr:0002 prod:0005 model:0004 ver:1.01 zwv:3.67 lib:06 cc:80,46,81,72,8F,75,43,86,84 ccOut:46,81,8F
+		//	0x0804 = device id, the inClusters are the commands
+		fingerprint deviceId: "0x0804"
+		fingerprint inClusters: "0x43, 0x46, 0x72, 0x75, 0x80, 0x81, 0x84, 0x86, 0x8F"
+		// 0x80 = Battery v1
+		// 0x46 = Climate Control Schedule v1
+		// 0x81 = Clock v1
+		// 0x72 = Manufacturer Specific v1
+		// 0x8F = Multi Cmd v1 (Multi Command Encapsulated)
+		// 0x75 = Protection v2
+		// 0x43 = Thermostat Setpoint v2
+		// 0x86 = Version v1
+		// 0x84 = Wake Up v2
 	}
 
 	simulator {
@@ -47,40 +44,40 @@ metadata {
 	// http://scripts.3dgo.net/smartthings/icons/
 	//	TODO: create temp set like Nest thermostat - http://docs.smartthings.com/en/latest/device-type-developers-guide/tiles-metadata.html
 	tiles(scale: 2) {
-    multiAttributeTile(name:"richtemp", type:"lighting", width:6, height:4) {
-	    tileAttribute("device.heatingSetpoint", key: "PRIMARY_CONTROL") {
-	      attributeState("heat", label:'${currentValue}°', icon: "st.Weather.weather2",
-	        backgroundColors:[
-	          [value: 4, color: "#153591"],
-	          [value: 7, color: "#1e9cbb"],
-	          [value: 10, color: "#90d2a7"],
-	          [value: 13, color: "#44b621"],
-	          [value: 16, color: "#f1d801"],
-	          [value: 19, color: "#d04e00"],
-	          [value: 22, color: "#bc2323"]
-	        ]
-	      )
-	    }
+		multiAttributeTile(name:"richtemp", type:"lighting", width:6, height:4) {
+			tileAttribute("device.heatingSetpoint", key: "PRIMARY_CONTROL") {
+				attributeState("heat", label:'${currentValue}°', icon: "st.Weather.weather2",
+					backgroundColors:[
+						[value: 4, color: "#153591"],
+						[value: 7, color: "#1e9cbb"],
+						[value: 10, color: "#90d2a7"],
+						[value: 13, color: "#44b621"],
+						[value: 16, color: "#f1d801"],
+						[value: 19, color: "#d04e00"],
+						[value: 22, color: "#bc2323"]
+						]
+				)
+			}
 			tileAttribute ("device.nextHeatingSetpoint", key: "SECONDARY_CONTROL") {
 				attributeState "heat", label:'Next ${currentValue}°'
-      }
-      tileAttribute("device.nextHeatingSetpoint", key: "SLIDER_CONTROL") {
+			}
+			tileAttribute("device.nextHeatingSetpoint", key: "SLIDER_CONTROL") {
 				attributeState "default", action:"setHeatingSetpoint", unit:""
-  		}
-    }
+			}
+		}
 		standardTile("switcher", "device.switch", height: 2, width: 3, inactiveLabel: true, decoration: "flat") {
 			state("off", action:"on", icon: "st.thermostat.heat", backgroundColor:"#153591")
 			state("on", action:"off", icon: "st.thermostat.cool", backgroundColor:"#bc2323")
 		}
 		valueTile("battery", "device.battery", inactiveLabel: false, height: 2, width: 3, decoration: "flat") {
-    	state "battery", label:'${currentValue}% battery', unit:""
-    }
-    controlTile("heatSliderControl", "device.nextHeatingSetpoint", "slider", height: 2, width: 6, inactiveLabel: false, range:"(4..22)") {
+			state "battery", label:'${currentValue}% battery', unit:""
+		}
+		controlTile("heatSliderControl", "device.nextHeatingSetpoint", "slider", height: 2, width: 6, inactiveLabel: false, range:"(4..22)") {
 			state "setHeatingSetpoint", action:"setHeatingSetpoint"
 		}
 
-    main "richtemp"
-    details(["richtemp", "heatSliderControl", "switcher", "battery"])
+		main "richtemp"
+		details(["richtemp", "heatSliderControl", "switcher", "battery"])
 	}
 }
 
