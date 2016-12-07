@@ -369,7 +369,7 @@ def installed() {
 
 def updated() {
 	log.debug("updated")
-	configure()
+	response(configure())
 }
 
 def configure() {
