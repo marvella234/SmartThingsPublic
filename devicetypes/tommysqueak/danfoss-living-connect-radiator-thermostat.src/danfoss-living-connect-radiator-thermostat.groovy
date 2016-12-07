@@ -16,7 +16,7 @@
 metadata {
 	definition (name: "Danfoss Living Connect Radiator Thermostat LC-13 v3", namespace: "tommysqueak", author: "Tom Philip") {
 		//	TODO: expose as a thermostat, for SmartApps
-		capability "Thermostat Heating Setpoint"
+		capability "Thermostat"
 		capability "Battery"
 		capability "Configuration"
 		capability "Switch"
@@ -74,19 +74,18 @@ metadata {
 				attributeState("VALUE_DOWN", action: "temperatureDown")
 			}
 
-			tileAttribute("device.heatingSetpoint", key: "SECONDARY_CONTROL") {
-				attributeState "default", label:'${currentValue}°', icon: "st.thermostat.heating"
+			tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
+					attributeState("idle", label:'${name}', backgroundColor:"#1e9cbb")
+					attributeState("heating", label:'${name}', backgroundColor:"#ffa81e")
+					attributeState("cooling", label:'${name}', backgroundColor:"#269bd2")
 			}
 
-			tileAttribute("device.heatingSetpoint", key: "OPERATING_STATE") {
-				attributeState("default", label:'Current ${currentValue}°', backgroundColor:"#153591")
-			}
-
-			tileAttribute("device.heatingSetpoint", key: "THERMOSTAT_MODE") {
+			tileAttribute("device.thermostatMode", key: "THERMOSTAT_MODE") {
+					attributeState("default", label:'${name}')
 			}
 
 			tileAttribute("device.heatingSetpoint", key: "HEATING_SETPOINT") {
-				attributeState("default", label:'${currentValue}')
+					attributeState("default", label:'${currentValue}', unit:"°C")
 			}
 		}
 
@@ -197,6 +196,12 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 	}
 
 	eventList << createEvent(deviceTempMap)
+	//	For acting like a thermostat
+	eventList << createEvent(name: "temperature", value: radiatorTemperature, unit: getTemperatureScale(), displayed: false)
+	eventList << createEvent(name: "thermostatSetpoint", value: radiatorTemperature, unit: getTemperatureScale(), displayed: false)
+	def switchState = onOffEvent(radiatorTemperature).value
+	eventList << createEvent(name: "thermostatMode", value: (switchState == "on") ? "heat" : "off")
+	eventList << createEvent(name: "thermostatOperatingState", value: (switchState == "on") ? "heating" : "idle")
 
 	if(nextTemperature == 0) {
 		//	initialise the nextHeatingSetpoint, on the very first time we install and get the devices temp
@@ -309,6 +314,40 @@ def on() {
 
 def off() {
 	setHeatingSetpoint(quickOffTemperature ?: 4)
+}
+
+
+def setCoolingSetpoint(number) {
+}
+
+def heat() {
+	on()
+}
+
+def cool() {
+	off()
+}
+
+def emergencyHeat() {
+	setHeatingSetpoint(10)
+}
+
+def setThermostatMode(mode) {
+}
+
+def fanOn() {
+}
+
+def fanAuto() {
+}
+
+def fanCirculate() {
+}
+
+def setThermostatFanMode(mode) {
+}
+
+def auto() {
 }
 
 def installed() {
