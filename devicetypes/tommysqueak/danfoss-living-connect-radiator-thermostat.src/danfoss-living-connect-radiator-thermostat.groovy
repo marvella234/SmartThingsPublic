@@ -69,18 +69,17 @@ metadata {
 				)
 			}
 
-			tileAttribute("device.heatingSetpoint", key: "VALUE_CONTROL") {
+			tileAttribute("device.nextHeatingSetpoint", key: "VALUE_CONTROL") {
 				attributeState("VALUE_UP", action: "temperatureUp")
 				attributeState("VALUE_DOWN", action: "temperatureDown")
 			}
 
-			tileAttribute("device.switch", key: "SECONDARY_CONTROL") {
-				attributeState "on", label:'${name}', icon: "st.switches.switch.on"
-				attributeState "off", label:'${name}', icon: "st.switches.switch.off"
+			tileAttribute("device.heatingSetpoint", key: "SECONDARY_CONTROL") {
+				attributeState "default", label:'${currentValue}°', icon: "st.thermostat.heating"
 			}
 
 			tileAttribute("device.heatingSetpoint", key: "OPERATING_STATE") {
-				attributeState("heatingSetpoint", label:'Current ${currentValue}°', backgroundColor:"#153591")
+				attributeState("default", label:'Current ${currentValue}°', backgroundColor:"#153591")
 			}
 
 			tileAttribute("device.heatingSetpoint", key: "THERMOSTAT_MODE") {
