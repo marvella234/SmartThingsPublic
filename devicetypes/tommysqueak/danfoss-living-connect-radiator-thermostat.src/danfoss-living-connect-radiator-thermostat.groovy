@@ -316,16 +316,6 @@ def off() {
 
 def installed() {
 	log.debug "installed"
-	configure()
-}
-
-def updated() {
-	log.debug("updated")
-	configure()
-}
-
-def configure() {
-	log.debug("configure")
 	delayBetween([
   	//	Not sure if this is needed :/
     zwave.configurationV1.configurationSet(parameterNumber:1, size:2, scaledConfigurationValue:100).format(),
@@ -335,10 +325,22 @@ def configure() {
     zwave.associationV1.associationSet(groupingIdentifier:1, nodeId:[zwaveHubNodeId]).format(),
   	//	Set it's time/clock. Do we need to do this periodically, like the battery check?
   	currentTimeCommand(),
-		// Make sure sleepy battery-powered sensors send their
-    // WakeUpNotifications to the hub every 5 mins
+		// Make sure sleepy battery-powered sensor sends its
+    // WakeUpNotifications to the hub every 5 mins intially
     zwave.wakeUpV1.wakeUpIntervalSet(seconds:300, nodeid:zwaveHubNodeId).format()
 	], 1000)
+}
+
+def updated() {
+	log.debug("updated")
+	configure()
+}
+
+def configure() {
+	log.debug("configure")
+	[
+    zwave.wakeUpV1.wakeUpIntervalSet(seconds:300, nodeid:zwaveHubNodeId).format()
+	]
 }
 
 private setClock() {
