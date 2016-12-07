@@ -167,9 +167,23 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 
 	log.debug "SetpointReport. current:${currentTemperature} next:${nextTemperature} radiator:${radiatorTemperature}"
 
-	def deviceTempMap = [name: "heatingSetpoint"]
-	deviceTempMap.value = radiatorTemperature
-	deviceTempMap.unit = getTemperatureScale()
+	def deviceTempMap = [name: "heatingSetpoint", value: radiatorTemperature, unit: getTemperatureScale()]
+
+	if(radiatorTemperature != currentTemperature){
+		//	The radiator temperature has changed. Why?
+		//	Is it because the app told it to change or is it coz it was done manually
+		if(state.lastSentTemperature == radiatorTemperature) {
+			//	it's the app! raise event heatingSetpoint, with desc App
+			deviceTempMap.descriptionText = "Temperature changed by app to {radiatorTemperature}"
+		}
+		else {
+			//	It's manual? raise event heatingSetpoint, with desc Manual
+			//	And I think set the next to be the manual setting too. All aligned.
+			deviceTempMap.descriptionText = "Temperature changed manually to {radiatorTemperature}"
+			state.lastSentTemperature = radiatorTemperature
+			eventList << createEvent(name:"nextHeatingSetpoint", value: radiatorTemperature, unit: getTemperatureScale())
+		}
+	}
 
 	def offOrOn = [name: "switch", displayed: false]
 	if(radiatorTemperature > 4) {
@@ -185,6 +199,7 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 	if(nextTemperature == 0) {
 		//	initialise the nextHeatingSetpoint, on the very first time we install and get the devices temp
 		eventList << createEvent(name:"nextHeatingSetpoint", value: radiatorTemperature, unit: getTemperatureScale())
+		state.lastSentTemperature = radiatorTemperature
 	}
 
 	eventList
@@ -209,15 +224,13 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
 	def heatingSetpoint = currentDouble("heatingSetpoint")
 	if (nextHeatingSetpoint != 0 && nextHeatingSetpoint != heatingSetpoint) {
 		log.debug "Sending new temperature ${nextHeatingSetpoint}"
+		state.lastSentTemperature = nextHeatingSetpoint
 		cmds << setHeatingSetpointCommand(nextHeatingSetpoint).format()
-		//	Mop up any flwas, ask for the devices temp
-		//cmds << zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 1).format()
-		//	Be sure to set the new temp ourselves, as commands don't always run in order
-		//event = createEvent(name: "heatingSetpoint", value: device.currentValue("nextHeatingSetpoint").doubleValue(), unit: getTemperatureScale())
+		cmds << zwave.thermostatSetpointV1.thermostatSetpointGet(setpointType: 1).format()
 	}
 
   cmds << zwave.wakeUpV1.wakeUpNoMoreInformation().format()
-  [event, response(delayBetween(cmds, 1000))]
+  [event, response(delayBetween(cmds, 1500))]
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
