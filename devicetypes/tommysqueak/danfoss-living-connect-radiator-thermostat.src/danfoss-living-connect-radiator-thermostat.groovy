@@ -94,8 +94,19 @@ metadata {
 			state "battery", label:'${currentValue}% battery', unit:""
 		}
 
-		main "richtemp"
+		standardTile("switcher", "device.switch", height: 2, width: 2, decoration: "flat") {
+			state("off", action:"on", label: "off", icon: "st.thermostat.cool", backgroundColor:"#ffffff")
+			state("on", action:"off", label: "on", icon: "st.thermostat.heat", backgroundColor:"#ffa81e")
+		}
+
+		main "switcher"
 		details(["richtemp", "battery"])
+	}
+
+	preferences {
+		input "wakeUpIntervalInMins", "number", title: "Wake Up Interval (min). Default 5mins.", description: "Wakes up and send\receives new temperature setting", range: "1..30", displayDuringSetup: true
+		input "quickOnTemperature", "number", title: "Quick On Temperature. Default 21°C.", description: "Quickly turn on the radiator to this temperature", range: "5..28", displayDuringSetup: false
+		input "quickOffTemperature", "number", title: "Quick Off Temperature. Default 4°C.", description: "Quickly turn off the radiator to this temperature", range: "4..20", displayDuringSetup: false
 	}
 }
 
@@ -174,31 +185,22 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 		//	Is it because the app told it to change or is it coz it was done manually
 		if(state.lastSentTemperature == radiatorTemperature) {
 			//	it's the app! raise event heatingSetpoint, with desc App
-			deviceTempMap.descriptionText = "Temperature changed by app to {radiatorTemperature}"
+			deviceTempMap.descriptionText = "Temperature changed by app to ${radiatorTemperature}"
 		}
 		else {
 			//	It's manual? raise event heatingSetpoint, with desc Manual
 			//	And I think set the next to be the manual setting too. All aligned.
-			deviceTempMap.descriptionText = "Temperature changed manually to {radiatorTemperature}"
+			deviceTempMap.descriptionText = "Temperature changed manually to ${radiatorTemperature}"
 			state.lastSentTemperature = radiatorTemperature
-			eventList << createEvent(name:"nextHeatingSetpoint", value: radiatorTemperature, unit: getTemperatureScale())
+			buildNextState(radiatorTemperature).each { eventList << it }
 		}
 	}
 
-	def offOrOn = [name: "switch", displayed: false]
-	if(radiatorTemperature > 4) {
-		offOrOn.value = "on"
-	}
-	else {
-		offOrOn.value = "off"
-	}
-
 	eventList << createEvent(deviceTempMap)
-	eventList << createEvent(offOrOn)
 
 	if(nextTemperature == 0) {
 		//	initialise the nextHeatingSetpoint, on the very first time we install and get the devices temp
-		eventList << createEvent(name:"nextHeatingSetpoint", value: radiatorTemperature, unit: getTemperatureScale())
+		buildNextState(radiatorTemperature).each { eventList << it }
 		state.lastSentTemperature = radiatorTemperature
 	}
 
@@ -252,7 +254,7 @@ def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
 //	TODO: review the commands, do they have the right interface/params
 
 def temperatureUp() {
-	def nextTemp = currentDouble("nextHeatingSetpoint") + 0.5
+	def nextTemp = currentDouble("nextHeatingSetpoint") + 0.5d
 	//	It can't handle above 28, so don't allow it go above
 	//	TODO: deal with Farenheit?
 	if(nextTemp > 28) {
@@ -262,7 +264,7 @@ def temperatureUp() {
 }
 
 def temperatureDown() {
-	def nextTemp = currentDouble("nextHeatingSetpoint") - 0.5
+	def nextTemp = currentDouble("nextHeatingSetpoint") - 0.5d
 	//	It can't go below 4, so don't allow it
 	if(nextTemp < 4) {
 		nextTemp = 4d
@@ -277,14 +279,9 @@ def setHeatingSetpoint(degrees) {
 
 def setHeatingSetpoint(Double degrees) {
 	log.debug "Storing temperature for next wake ${degrees}"
-	sendEvent(name:"nextHeatingSetpoint", value: degrees, unit: getTemperatureScale())
 
-	if(degrees > 4) {
-		sendEvent(name:"switch", value: "on", displayed: false)
-	}
-	else {
-		sendEvent(name:"switch", value: "off", displayed: false)
-	}
+	sendEvent(name:"nextHeatingSetpoint", value: degrees, unit: getTemperatureScale())
+	sendEvent(onOffEvent(degrees))
 }
 
 def setHeatingSetpointCommand(Double degrees) {
@@ -307,11 +304,11 @@ def setHeatingSetpointCommand(Double degrees) {
 }
 
 def on() {
-	setHeatingSetpoint(20)
+	setHeatingSetpoint(quickOnTemperature ?: 21)
 }
 
 def off() {
-	setHeatingSetpoint(4)
+	setHeatingSetpoint(quickOffTemperature ?: 4)
 }
 
 def installed() {
@@ -338,9 +335,28 @@ def updated() {
 
 def configure() {
 	log.debug("configure")
+	def wakeUpEvery = (wakeUpIntervalInMins ?: 5) * 60
 	[
-    zwave.wakeUpV1.wakeUpIntervalSet(seconds:300, nodeid:zwaveHubNodeId).format()
+    zwave.wakeUpV1.wakeUpIntervalSet(seconds:wakeUpEvery, nodeid:zwaveHubNodeId).format()
 	]
+}
+
+private buildNextState(Double degrees) {
+	def nextStateList = []
+
+	nextStateList << createEvent(name:"nextHeatingSetpoint", value: degrees, unit: getTemperatureScale(), displayed: false)
+	nextStateList << createEvent(onOffEvent(degrees))
+
+	nextStateList
+}
+
+private onOffEvent(Double degrees) {
+	if(degrees > (quickOffTemperature ?: 4)) {
+		[name:"switch", value: "on", displayed: false]
+	}
+	else {
+		[name:"switch", value: "off", displayed: false]
+	}
 }
 
 private setClock() {
