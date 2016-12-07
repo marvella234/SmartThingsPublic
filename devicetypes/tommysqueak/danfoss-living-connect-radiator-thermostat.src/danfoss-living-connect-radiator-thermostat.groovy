@@ -239,7 +239,7 @@ def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
 //	TODO: review the commands, do they have the right interface/params
 
 def temperatureUp() {
-	def nextTemp = currentDouble("nextHeatingSetpoint") + 1
+	def nextTemp = currentDouble("nextHeatingSetpoint") + 0.5
 	//	It can't handle above 28, so don't allow it go above
 	//	TODO: deal with Farenheit?
 	if(nextTemp > 28) {
@@ -249,7 +249,7 @@ def temperatureUp() {
 }
 
 def temperatureDown() {
-	def nextTemp = currentDouble("nextHeatingSetpoint") - 1
+	def nextTemp = currentDouble("nextHeatingSetpoint") - 0.5
 	//	It can't go below 4, so don't allow it
 	if(nextTemp < 4) {
 		nextTemp = 4d
