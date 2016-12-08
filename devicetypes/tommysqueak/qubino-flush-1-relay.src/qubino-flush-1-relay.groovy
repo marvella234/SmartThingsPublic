@@ -15,13 +15,14 @@
  */
 metadata {
   definition (name: "Qubino Flush 1 Relay", namespace: "tommysqueak", author: "Tom Philip") {
+    capability "Actuator"
+    capability "Sensor"
     capability "Switch"
     capability "Relay Switch"
     capability "Temperature Measurement"
     capability "Power Meter"
     capability "Energy Meter"
     capability "Refresh"
-    capability "Actuator"
     capability "Configuration"
 
     command "reset"
