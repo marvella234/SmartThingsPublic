@@ -15,7 +15,8 @@
  */
 metadata {
 	definition (name: "Danfoss Living Connect Radiator Thermostat LC-13 v3", namespace: "tommysqueak", author: "Tom Philip") {
-		//	TODO: expose as a thermostat, for SmartApps
+		capability "Actuator"
+		capability "Sensor"
 		capability "Thermostat"
 		capability "Battery"
 		capability "Configuration"
