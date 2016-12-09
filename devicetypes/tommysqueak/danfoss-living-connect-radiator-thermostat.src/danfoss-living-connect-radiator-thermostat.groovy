@@ -107,8 +107,8 @@ metadata {
 
 	preferences {
 		input "wakeUpIntervalInMins", "number", title: "Wake Up Interval (min). Default 5mins.", description: "Wakes up and send\receives new temperature setting", range: "1..30", displayDuringSetup: true
-		input "quickOnTemperature", "number", title: "Quick On Temperature. Default 21°C.", description: "Quickly turn on the radiator to this temperature", range: "5..28", displayDuringSetup: false
-		input "quickOffTemperature", "number", title: "Quick Off Temperature. Default 4°C.", description: "Quickly turn off the radiator to this temperature", range: "4..20", displayDuringSetup: false
+		input "quickOnTemperature", "number", title: "Quick On Temperature. Default 21°C.", description: "Quickly turn on the radiator to this temperature", range: "5..82", displayDuringSetup: false
+		input "quickOffTemperature", "number", title: "Quick Off Temperature. Default 4°C.", description: "Quickly turn off the radiator to this temperature", range: "4..68", displayDuringSetup: false
 	}
 }
 
@@ -173,7 +173,7 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 
 	def eventList = []
 	def cmdScale = cmd.scale == 1 ? "F" : "C"
-	def radiatorTemperature = Double.parseDouble(convertTemperatureIfNeeded(cmd.scaledValue, cmdScale, cmd.precision))
+	def radiatorTemperature = Double.parseDouble(convertTemperatureIfNeeded(cmd.scaledValue, cmdScale, cmd.precision)).round(1)
 
 	def currentTemperature = currentDouble("heatingSetpoint")
 	def nextTemperature = currentDouble("nextHeatingSetpoint")
@@ -265,8 +265,8 @@ def temperatureUp() {
 	def nextTemp = currentDouble("nextHeatingSetpoint") + 0.5d
 	//	It can't handle above 28, so don't allow it go above
 	//	TODO: deal with Farenheit?
-	if(nextTemp > 28) {
-		nextTemp = 28d
+	if(nextTemp > fromCelsiusToLocal(28)) {
+		nextTemp = fromCelsiusToLocal(28)
 	}
 	setHeatingSetpoint(nextTemp)
 }
@@ -274,8 +274,8 @@ def temperatureUp() {
 def temperatureDown() {
 	def nextTemp = currentDouble("nextHeatingSetpoint") - 0.5d
 	//	It can't go below 4, so don't allow it
-	if(nextTemp < 4) {
-		nextTemp = 4d
+	if(nextTemp < fromCelsiusToLocal(4)) {
+		nextTemp = fromCelsiusToLocal(4)
 	}
 	setHeatingSetpoint(nextTemp)
 }
@@ -288,7 +288,7 @@ def setHeatingSetpoint(degrees) {
 def setHeatingSetpoint(Double degrees) {
 	log.debug "Storing temperature for next wake ${degrees}"
 
-	sendEvent(name:"nextHeatingSetpoint", value: degrees, unit: getTemperatureScale())
+	sendEvent(name:"nextHeatingSetpoint", value: degrees.round(1), unit: getTemperatureScale())
 	sendEvent(onOffEvent(degrees))
 }
 
@@ -312,11 +312,11 @@ def setHeatingSetpointCommand(Double degrees) {
 }
 
 def on() {
-	setHeatingSetpoint(quickOnTemperature ?: 21)
+	setHeatingSetpoint(quickOnTemperature ?: fromCelsiusToLocal(21))
 }
 
 def off() {
-	setHeatingSetpoint(quickOffTemperature ?: 4)
+	setHeatingSetpoint(quickOffTemperature ?: fromCelsiusToLocal(4))
 }
 
 
@@ -332,7 +332,7 @@ def cool() {
 }
 
 def emergencyHeat() {
-	setHeatingSetpoint(10)
+	setHeatingSetpoint(fromCelsiusToLocal(10))
 }
 
 def setThermostatMode(mode) {
@@ -393,7 +393,7 @@ private buildNextState(Double degrees) {
 }
 
 private onOffEvent(Double degrees) {
-	if(degrees > (quickOffTemperature ?: 4)) {
+	if(degrees > (quickOffTemperature ?: fromCelsiusToLocal(4))) {
 		[name:"switch", value: "on", displayed: false]
 	}
 	else {
@@ -415,6 +415,15 @@ private setClock() {
 
 private daysToTime(days) {
 	days*24*60*60*1000
+}
+
+private fromCelsiusToLocal(Double degrees) {
+	if(getTemperatureScale() == "F") {
+		return celsiusToFahrenheit(degrees)
+	}
+	else {
+		return degrees
+	}
 }
 
 private currentTimeCommand() {
