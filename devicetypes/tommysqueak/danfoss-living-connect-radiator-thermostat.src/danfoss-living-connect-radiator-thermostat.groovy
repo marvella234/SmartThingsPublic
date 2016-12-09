@@ -76,13 +76,15 @@ metadata {
 			}
 
 			tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
-					attributeState("idle", label:'${name}', backgroundColor:"#1e9cbb")
-					attributeState("heating", label:'${name}', backgroundColor:"#ffa81e")
-					attributeState("cooling", label:'${name}', backgroundColor:"#269bd2")
+				attributeState("default", label:'${currentValue}')
+				attributeState("heating", label:"heating", backgroundColor:"#ffa81e", icon:"st.thermostat.heat")
+				attributeState("idle", label:"idle", backgroundColor:"#1e9cbb", icon:"st.thermostat.heating-cooling-off")
 			}
 
 			tileAttribute("device.thermostatMode", key: "THERMOSTAT_MODE") {
-					attributeState("default", label:'${name}')
+				attributeState("default", label:'${currentValue}')
+				attributeState("heat", label:"heat", backgroundColor:"#ffa81e", icon:"st.thermostat.heat")
+				attributeState("off", label:"off", backgroundColor:"#1e9cbb", icon:"st.thermostat.heating-cooling-off")
 			}
 
 			tileAttribute("device.heatingSetpoint", key: "HEATING_SETPOINT") {
@@ -201,7 +203,7 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 	eventList << createEvent(name: "temperature", value: radiatorTemperature, unit: getTemperatureScale(), displayed: false)
 	eventList << createEvent(name: "thermostatSetpoint", value: radiatorTemperature, unit: getTemperatureScale(), displayed: false)
 	def switchState = onOffEvent(radiatorTemperature).value
-	eventList << createEvent(name: "thermostatMode", value: (switchState == "on") ? "heat" : "off")
+	eventList << createEvent(name: "thermostatMode", value: (switchState == "on") ? "heat" : "off", displayed: false)
 	eventList << createEvent(name: "thermostatOperatingState", value: (switchState == "on") ? "heating" : "idle")
 
 	if(nextTemperature == 0) {
