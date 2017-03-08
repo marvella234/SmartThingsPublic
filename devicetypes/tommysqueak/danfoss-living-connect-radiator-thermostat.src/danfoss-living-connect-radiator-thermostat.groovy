@@ -23,8 +23,8 @@ metadata {
 		capability "Configuration"
 		capability "Switch"
 
-		command "tempUp"
-		command "tempDown"
+		command "temperatureUp"
+		command "temperatureDown"
 		attribute "nextHeatingSetpoint", "number"
 
 		// raw fingerprint zw:S type:0804 mfr:0002 prod:0005 model:0004 ver:1.01 zwv:3.67 lib:06 cc:80,46,81,72,8F,75,43,86,84 ccOut:46,81,8F
@@ -54,8 +54,8 @@ metadata {
 			}
 
 			tileAttribute("device.nextHeatingSetpoint", key: "VALUE_CONTROL") {
-				attributeState "VALUE_UP", action: "tempUp"
-				attributeState "VALUE_DOWN", action: "tempDown"
+				attributeState "VALUE_UP", action: "temperatureUp"
+				attributeState "VALUE_DOWN", action: "temperatureDown"
 			}
 
 			tileAttribute("device.battery", key: "SECONDARY_CONTROL") {
@@ -288,7 +288,7 @@ def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
 //
 //	TODO: review the commands, do they have the right interface/params
 
-def tempUp() {
+def temperatureUp() {
 	def nextTemp = currentDouble("nextHeatingSetpoint") + 0.5d
 	// It can't handle above 28, so don't allow it go above
 	// TODO: deal with Farenheit?
@@ -299,7 +299,7 @@ def tempUp() {
 	setHeatingSetpoint(nextTemp)
 }
 
-def tempDown() {
+def temperatureDown() {
 	def nextTemp = currentDouble("nextHeatingSetpoint") - 0.5d
 	// It can't go below 4, so don't allow it
 	if(nextTemp < fromCelsiusToLocal(4)) {
