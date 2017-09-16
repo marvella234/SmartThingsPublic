@@ -95,18 +95,22 @@ metadata {
 
 		valueTile("heatingSetpoint", "device.heatingSetpoint", height: 2, width: 2, decoration: "flat") {
 			state "default", label:'${currentValue}°', unit:"dC", backgroundColors:[
-				// Celsius Color Range
-				[value: 4, color: "#153591"],
-				[value: 15, color: "#1e9cbb"],
-				[value: 21, color: "#79b821"],
-				[value: 24, color: "#ffa81e"],
-				[value: 28, color: "#bc2323"],
-				// Fahrenheit Color Range
-				[value: 39, color: "#153591"],
-				[value: 59, color: "#1e9cbb"],
-				[value: 70, color: "#79b821"],
-				[value: 75, color: "#ffa81e"],
-				[value: 82, color: "#bc2323"],
+				// Celsius
+				[value: 0, color: "#153591"],
+				[value: 7, color: "#1e9cbb"],
+				[value: 15, color: "#90d2a7"],
+				[value: 23, color: "#44b621"],
+				[value: 28, color: "#f1d801"],
+				[value: 35, color: "#d04e00"],
+				[value: 37, color: "#bc2323"],
+				// Fahrenheit
+				[value: 40, color: "#153591"],
+				[value: 44, color: "#1e9cbb"],
+				[value: 59, color: "#90d2a7"],
+				[value: 74, color: "#44b621"],
+				[value: 84, color: "#f1d801"],
+				[value: 95, color: "#d04e00"],
+				[value: 96, color: "#bc2323"]
 			]
 		}
 
@@ -211,7 +215,7 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 			deviceTempMap.descriptionText = "Temperature changed manually to ${radiatorTemperature}"
 			state.lastSentTemperature = radiatorTemperature
 			eventList << createEvent(name:"nextHeatingSetpoint", value: radiatorTemperature, unit: getTemperatureScale(), displayed: false)
-			
+
 			def offTemperature = quickOffTemperature ?: fromCelsiusToLocal(4)
 			if (radiatorTemperature > offTemperature) {
 				eventList << createEvent(name: "switch", value: "on", displayed: false)
@@ -253,7 +257,7 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
 	def nextHeatingSetpoint = currentDouble("nextHeatingSetpoint")
 	def heatingSetpoint = currentDouble("heatingSetpoint")
 	def thermostatMode = device.currentValue("thermostatMode")
-	
+
 	log.debug "Thermostat mode is ${thermostatMode}"
 	if (thermostatMode == "off") {
 		nextHeatingSetpoint = quickOffTemperature ?: fromCelsiusToLocal(4)
