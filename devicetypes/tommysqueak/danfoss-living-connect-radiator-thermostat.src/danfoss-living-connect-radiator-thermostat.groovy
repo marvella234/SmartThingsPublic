@@ -1,7 +1,7 @@
 /**
  *  Danfoss Living Connect Radiator Thermostat LC-13
  *
- *  Copyright 2016 Tom Philip
+ *  Copyright 2017 Tom Philip
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -11,6 +11,13 @@
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
+ *
+ *
+ *  Revision History
+ *  ==============================================
+ *  2017-09-16 - Uses the 'official' colour range for showing off the temperature.
+ *  2017-09-16 - Battery icon - Credit: Power bank by Gregor Cresnar from the Noun Project.
+ *  2017-03-10 - Radiator can be turned off, whilst keeping the next temperature state. Credit: https://github.com/struna
  *
  */
 
@@ -59,7 +66,7 @@ metadata {
 			}
 
 			tileAttribute("device.battery", key: "SECONDARY_CONTROL") {
-				attributeState "default", label:'${currentValue}%', unit:"%", icon:"st.nest.empty" // TODO: update battery icon
+				attributeState "default", label:'${currentValue}%', unit:"%", icon:"https://raw.githubusercontent.com/tommysqueak/SmartThingsPublic/master/devicetypes/tommysqueak/danfoss-living-connect-radiator-thermostat.src/battery.png"
 			}
 
 			tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
