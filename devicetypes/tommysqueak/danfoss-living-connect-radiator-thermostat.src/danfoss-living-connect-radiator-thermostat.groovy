@@ -71,14 +71,14 @@ metadata {
 
 			tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
 				attributeState "default", label:'${currentValue}'
-				attributeState "heating", label:"heating", backgroundColor:"#ffa81e", icon:"st.thermostat.heat"
-				attributeState "idle", label:"idle", backgroundColor:"#cccccc", icon:"st.thermostat.heating-cooling-off"
+				attributeState "heating", label:"heating", backgroundColor:"#e86d13", icon:"st.thermostat.heat"
+				attributeState "idle", label:"idle", backgroundColor:"#ffffff", icon:"st.thermostat.heating-cooling-off"
 			}
 
 			tileAttribute("device.thermostatMode", key: "THERMOSTAT_MODE") {
 				attributeState "default", label:'${currentValue}'
-				attributeState "heat", label:"heat", backgroundColor:"#ffa81e", icon:"st.thermostat.heat"
-				attributeState "off", label:"off", backgroundColor:"#cccccc", icon:"st.thermostat.heating-cooling-off"
+				attributeState "heat", label:"heat", backgroundColor:"#e86d13", icon:"st.thermostat.heat"
+				attributeState "off", label:"off", backgroundColor:"#ffffff", icon:"st.thermostat.heating-cooling-off"
 			}
 
 			tileAttribute("device.heatingSetpoint", key: "HEATING_SETPOINT") {
@@ -88,7 +88,7 @@ metadata {
 
 		standardTile("switcher", "device.switch", height: 2, width: 2, decoration: "flat") {
 			state "off", action:"on", label: "off", icon: "st.thermostat.heating-cooling-off", backgroundColor:"#ffffff"
-			state "on", action:"off", label: "on", icon: "st.thermostat.heat", backgroundColor:"#79b821"
+			state "on", action:"off", label: "on", icon: "st.thermostat.heat", backgroundColor:"#e86d13"
 		}
 
 		standardTile("thermostatMode", "device.thermostatMode", height: 2, width: 2, decoration: "flat") {
