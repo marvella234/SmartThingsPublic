@@ -72,7 +72,7 @@ metadata {
 			tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
 				attributeState "default", label:'${currentValue}'
 				attributeState "heating", label:"heating", backgroundColor:"#e86d13", icon:"st.thermostat.heat"
-				attributeState "idle", label:"idle", backgroundColor:"#ffffff", icon:"st.thermostat.heating-cooling-off"
+				attributeState "idle", label:"idle", backgroundColor:"#cccccc", icon:"st.thermostat.heating-cooling-off"
 			}
 
 			tileAttribute("device.thermostatMode", key: "THERMOSTAT_MODE") {
