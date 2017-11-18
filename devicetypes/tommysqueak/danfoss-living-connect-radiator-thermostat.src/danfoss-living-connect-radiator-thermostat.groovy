@@ -88,7 +88,7 @@ metadata {
 
 		standardTile("switcher", "device.switch", height: 2, width: 2, decoration: "flat") {
 			state "off", action:"on", label: "off", icon: "st.thermostat.heating-cooling-off", backgroundColor:"#ffffff"
-			state "on", action:"off", label: "on", icon: "st.thermostat.heat", backgroundColor:"#e86d13"
+			state "on", action:"off", label: "on", icon: "st.thermostat.heat", backgroundColor:"#00a0dc"
 		}
 
 		standardTile("thermostatMode", "device.thermostatMode", height: 2, width: 2, decoration: "flat") {
