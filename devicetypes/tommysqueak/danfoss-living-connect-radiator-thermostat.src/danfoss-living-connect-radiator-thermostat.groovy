@@ -33,6 +33,7 @@ metadata {
 		command "temperatureUp"
 		command "temperatureDown"
 		attribute "nextHeatingSetpoint", "number"
+		attribute "lastWakeUp", "string"
 
 		// raw fingerprint zw:S type:0804 mfr:0002 prod:0005 model:0004 ver:1.01 zwv:3.67 lib:06 cc:80,46,81,72,8F,75,43,86,84 ccOut:46,81,8F
 		fingerprint type: "0804", mfr: "0002", prod: "0005", model: "0004", cc: "80,46,81,72,8F,75,43,86,84", ccOut:"46,81,8F"
@@ -121,8 +122,12 @@ metadata {
 			]
 		}
 
+		valueTile("lastWakeUpTile", "device.lastWakeUp", decoration: "flat", inactiveLabel: false, width: 4, height: 1) {
+      state "lastWakeUp", label:'Last check-in:\n ${currentValue}'
+    }
+
 		main "switcher"
-		details(["richtemp", "thermostatMode"])
+		details(["richtemp", "thermostatMode", "lastWakeUpTile"])
 	}
 
 	preferences {
@@ -249,7 +254,8 @@ def zwaveEvent(physicalgraph.zwave.commands.thermostatsetpointv2.ThermostatSetpo
 def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
 	log.debug "Wakey wakey"
 
-	def event = createEvent(descriptionText: "${device.displayName} woke up", displayed: false)
+	def now = new Date().format("EEE, d MMM yyyy HH:mm:ss",location.timeZone)
+	def event = createEvent(name: "lastWakeUp", value: now, descriptionText: "${device.displayName} woke up", displayed: false)
 	def cmds = []
 
 	// Only ask for battery if we haven't had a BatteryReport in a while
