@@ -36,7 +36,9 @@ metadata {
 		attribute "lastWakeUp", "string"
 
 		// raw fingerprint zw:S type:0804 mfr:0002 prod:0005 model:0004 ver:1.01 zwv:3.67 lib:06 cc:80,46,81,72,8F,75,43,86,84 ccOut:46,81,8F
-		fingerprint type: "0804", mfr: "0002", prod: "0005", model: "0004", cc: "80,46,81,72,8F,75,43,86,84", ccOut:"46,81,8F"
+		fingerprint type: "0804", mfr: "0002", prod: "0005", model: "0004"
+		fingerprint cc: "80,46,81,72,8F,75,43,86,84", ccOut: "46,81,8F"
+
 		// 0x80 = Battery v1
 		// 0x46 = Climate Control Schedule v1
 		// 0x81 = Clock v1
