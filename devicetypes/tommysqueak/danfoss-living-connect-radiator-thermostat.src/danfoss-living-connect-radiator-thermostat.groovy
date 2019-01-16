@@ -33,6 +33,8 @@ metadata {
 		command "temperatureUp"
 		command "temperatureDown"
 		attribute "nextHeatingSetpoint", "number"
+		attribute "minHeatingSetpoint", "number"
+		attribute "maxHeatingSetpoint", "number"
 		attribute "lastWakeUp", "string"
 
 		// raw fingerprint zw:S type:0804 mfr:0002 prod:0005 model:0004 ver:1.01 zwv:3.67 lib:06 cc:80,46,81,72,8F,75,43,86,84 ccOut:46,81,8F
@@ -420,6 +422,7 @@ def auto() {
 
 def installed() {
 	log.debug "installed"
+	setDeviceLimits()
 	delayBetween([
 		// Not sure if this is needed :/
 		zwave.configurationV1.configurationSet(parameterNumber:1, size:2, scaledConfigurationValue:100).format(),
@@ -443,9 +446,15 @@ def updated() {
 def configure() {
 	log.debug("configure")
 	def wakeUpEvery = (wakeUpIntervalInMins ?: 5) * 60
+	setDeviceLimits()
 	[
 		zwave.wakeUpV1.wakeUpIntervalSet(seconds:wakeUpEvery, nodeid:zwaveHubNodeId).format()
 	]
+}
+
+private setDeviceLimits() {
+	sendEvent(name:"minHeatingSetpoint", value: 4, unit: "°C", displayed: false)
+	sendEvent(name:"maxHeatingSetpoint", value: 28, unit: "°C", displayed: false)
 }
 
 private setClock() {
