@@ -15,6 +15,8 @@
  *
  *  Revision History
  *  ==============================================
+ *  2019-01-16 - Added device min & max setpoint limits that Alexa and Google Home rely on.
+ *  2019-01-16 - Showing the last time the device checked in. For piece of mind and troubleshooting.
  *  2017-09-16 - Uses the 'official' colour range for showing off the temperature.
  *  2017-09-16 - Battery icon - Credit: Power bank by Gregor Cresnar from the Noun Project.
  *  2017-03-10 - Radiator can be turned off, whilst keeping the next temperature state. Credit: https://github.com/struna
